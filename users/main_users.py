@@ -82,9 +82,3 @@ async def logout_user(response: Response):
     response.delete_cookie(config.JWT_ACCESS_COOKIE_NAME)
     return {"status": "You have logged out"}
 
-@router.get("/me", dependencies=[Depends(security.access_token_required)], tags=["Пользователи"], summary="Получение информации о пользователе")
-async def get_current_user(user: Annotated[User, Depends(security.get_current_user)], db: Session = Depends(init_db)):
-    user_data = db.query(Users).filter(Users.username == user.username).first()
-    if not user_data:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user_data
