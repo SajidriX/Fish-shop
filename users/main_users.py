@@ -3,7 +3,13 @@ from contextlib import asynccontextmanager
 from models import Base, engine, init_db, Session, SessionLocal, Users
 from  schemas import User
 from typing import List
+from authx import AuthX, AuthXConfig
 
+config = AuthXConfig()
+config.JWT_ALGORITHM = "HS256"
+config.JWT_SECRET_KEY = "12201222Sajison1222!"
+
+security = AuthX(config=config)
 
 
 router = APIRouter()
@@ -14,7 +20,6 @@ async def create_user(user_data: User, db: Session = Depends(init_db)):
     db.add(user)
     db.commit()
     db.refresh(user) 
-    
     return user
 
 
@@ -53,3 +58,13 @@ async def update_user(
     
     db.commit()
     return user
+
+@router.post("/login")
+async def login_user(user: User,db: Session = Depends(init_db)):
+    query = db.query(Users).filter(Users.username == user.username, Users.password == user.password).first()
+    if not query:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    token = security.create_access_token(uid=user.username)
+
+    return {"acces token": token}
