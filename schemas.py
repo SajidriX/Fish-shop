@@ -10,3 +10,7 @@ class Fish(BaseModel):
     name: str
     price: float
     cathced: str
+
+class UserGet(BaseModel):
+    username: str
+    balance: float

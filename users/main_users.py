@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body
 from contextlib import asynccontextmanager
 from models import Base, engine, init_db, Session, SessionLocal, Users
-from  schemas import User
+from  schemas import User, UserGet
 from typing import List
 from authx import AuthX, AuthXConfig
 
@@ -24,7 +24,7 @@ async def create_user(user_data: User, db: Session = Depends(init_db)):
     return user
 
 
-@router.get("/users", response_model=List[User])
+@router.get("/users", response_model=List[UserGet])
 async def get_users(db: Session = Depends(init_db)):
     try:
         users = db.query(Users).all()
