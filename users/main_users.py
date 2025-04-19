@@ -81,4 +81,3 @@ async def protected_route(db: Session = Depends(init_db)):
 async def logout_user(response: Response):
     response.delete_cookie(config.JWT_ACCESS_COOKIE_NAME)
     return {"status": "You have logged out"}
-
