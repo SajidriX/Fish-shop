@@ -76,3 +76,8 @@ async def login_user(user: Annotated[User, Body()],response: Response, db: Sessi
 async def protected_route(db: Session = Depends(init_db)):
     fishes = db.query(Fishes).all()
     return {"You have loginned! Congratulations! There are all our fishes for example": fishes}
+
+@router.get("/logout", tags=["Пользователи"], summary="Выход из аккаунта")
+async def logout_user(response: Response):
+    response.delete_cookie(config.JWT_ACCESS_COOKIE_NAME)
+    return {"status": "You have logged out"}
