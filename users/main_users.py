@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Response
 from contextlib import asynccontextmanager
 from models import Base, engine, init_db, Session, SessionLocal, Users
 from  schemas import User, UserGet
 from typing import List
 from authx import AuthX, AuthXConfig
+from models import Fishes
 
 config = AuthXConfig()
 config.JWT_ALGORITHM = "HS256"
@@ -61,11 +62,17 @@ async def update_user(
     return user
 
 @router.post("/login")
-async def login_user(user: User,db: Session = Depends(init_db)):
+async def login_user(user: User,response: Response, db: Session = Depends(init_db)):
     query = db.query(Users).filter(Users.username == user.username, Users.password == user.password).first()
     if not query:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="User not found")    
     
     token = security.create_access_token(uid=user.username)
+    response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, token)
 
     return {"acces token": token}
+
+@router.get("/protected", dependencies=[Depends(security.access_token_required)])
+async def protected_route(db: Session = Depends(init_db)):
+    fishes = db.query(Fishes).all()
+    return {"You have loginned! Congratulations! There are all our fishes for example": fishes}
