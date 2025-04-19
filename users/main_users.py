@@ -8,6 +8,7 @@ from authx import AuthX, AuthXConfig
 config = AuthXConfig()
 config.JWT_ALGORITHM = "HS256"
 config.JWT_SECRET_KEY = "12201222Sajison1222!"
+config.JWT_TOKEN_LOCATION = ["cookies"]
 
 security = AuthX(config=config)
 
