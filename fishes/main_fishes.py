@@ -7,12 +7,12 @@ from typing import List
 
 router = APIRouter()
 
-@router.get("/fishes", response_model=List[Fish])
+@router.get("/fishes", response_model=List[Fish], tags=["Рыба"], summary="Получить всю рыбу")
 async def get_fishes(db: Session = Depends(init_db)):
     fishes = db.query(Fishes).all()
     return fishes
 
-@router.post("/fish_sell", response_model=Fish)
+@router.post("/fish_sell", response_model=Fish, tags=["Рыба"], summary="Выставить рыбу на продажу")
 async def sell_fish(fish_data: Fish, db: Session = Depends(init_db)):
     fish = Fishes(name=fish_data.name, price=fish_data.price, cathced=fish_data.cathced)
     db.add(fish)
@@ -20,7 +20,7 @@ async def sell_fish(fish_data: Fish, db: Session = Depends(init_db)):
     db.refresh(fish)
     return fish
 
-@router.delete("/fishes/{fish_id}")
+@router.delete("/fishes/{fish_id}", tags=["Рыба"], summary="Удалить рыбу")
 async def delete_fish(fish_id: int, db: Session = Depends(init_db)):
     fish = db.query(Fishes).filter(Fishes.id == fish_id).first()
     if not fish:
@@ -29,7 +29,7 @@ async def delete_fish(fish_id: int, db: Session = Depends(init_db)):
     db.commit()
     return {"status": "Fish deleted"}
 
-@router.patch("/fishes/{fish_id}")
+@router.patch("/fishes/{fish_id}", tags=["Рыба"], summary="Изменить рыбу")
 async def update_fish(
     fish_id: int,
     fish_data: dict = Body(...),
