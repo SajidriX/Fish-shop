@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Response, Path
 from contextlib import asynccontextmanager
 from models import Base, engine, init_db, Session, SessionLocal, Users
-from  schemas import User, UserGet
+from  schemas import User, UserGet, UserCreate
 from typing import List, Annotated, Dict
 from authx import AuthX, AuthXConfig
 from models import Fishes
@@ -17,8 +17,8 @@ security = AuthX(config=config)
 router = APIRouter()
 
 @router.post("/users_create", response_model=User, tags=["Пользователи"], summary="Создание пользователя") 
-async def create_user(user_data: Annotated[User, Body()], db: Session = Depends(init_db)):
-    user = Users(username=user_data.username, balance=user_data.balance, password = user_data.password)
+async def create_user(user_data: Annotated[UserCreate, Body()], db: Session = Depends(init_db)):
+    user = Users(username=user_data.username, password = user_data.password)
     db.add(user)
     db.commit()
     db.refresh(user) 

@@ -3,7 +3,7 @@ from typing import Annotated
 
 class User(BaseModel):
     username: str
-    balance: float
+    balance: float = 0
     password: str
 
 class Fish(BaseModel):
@@ -14,3 +14,7 @@ class Fish(BaseModel):
 class UserGet(BaseModel):
     username: str
     balance: float
+
+class UserCreate(BaseModel):
+    username: Annotated[str, Field(min_length=3, max_length=20)]
+    password: Annotated[str, Field(min_length=4, max_length=35)]
