@@ -7,7 +7,7 @@ from authx import AuthX, AuthXConfig
 from models import Fishes
 
 config = AuthXConfig()
-config.JWT_ALGORITHM = "HS256"
+config.JWT_ALGORITHM = "HS512"
 config.JWT_SECRET_KEY = "12201222Sajison1222!"
 config.JWT_TOKEN_LOCATION = ["cookies"]
 
@@ -77,7 +77,7 @@ async def protected_route(db: Session = Depends(init_db)):
     fishes = db.query(Fishes).all()
     return {"You have loginned! Congratulations! There are all our fishes for example": fishes}
 
-@router.get("/logout", tags=["Пользователи"], summary="Выход из аккаунта")
+@router.delete("/logout", tags=["Пользователи"], summary="Выход из аккаунта")
 async def logout_user(response: Response):
     response.delete_cookie(config.JWT_ACCESS_COOKIE_NAME)
     return {"status": "You have logged out"}
