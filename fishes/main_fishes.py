@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from fastapi import APIRouter, Depends, HTTPException, Body, Path
 from contextlib import asynccontextmanager
 from models import Base, engine, init_db, Session, SessionLocal, Fishes
 from  schemas import Fish
-from typing import List
+from typing import List, Annotated
 
 
 router = APIRouter()
@@ -13,7 +13,7 @@ async def get_fishes(db: Session = Depends(init_db)):
     return fishes
 
 @router.post("/fish_sell", response_model=Fish, tags=["Рыба"], summary="Выставить рыбу на продажу")
-async def sell_fish(fish_data: Fish, db: Session = Depends(init_db)):
+async def sell_fish(fish_data: Annotated[Fish, Body()], db: Session = Depends(init_db)):
     fish = Fishes(name=fish_data.name, price=fish_data.price, cathced=fish_data.cathced)
     db.add(fish)
     db.commit()
@@ -21,7 +21,7 @@ async def sell_fish(fish_data: Fish, db: Session = Depends(init_db)):
     return fish
 
 @router.delete("/fishes/{fish_id}", tags=["Рыба"], summary="Удалить рыбу")
-async def delete_fish(fish_id: int, db: Session = Depends(init_db)):
+async def delete_fish(fish_id: Annotated[int, Path(ge=0,le=100000)], db: Session = Depends(init_db)):
     fish = db.query(Fishes).filter(Fishes.id == fish_id).first()
     if not fish:
         raise HTTPException(status_code=404, detail="Fish not found")
@@ -31,7 +31,7 @@ async def delete_fish(fish_id: int, db: Session = Depends(init_db)):
 
 @router.patch("/fishes/{fish_id}", tags=["Рыба"], summary="Изменить рыбу")
 async def update_fish(
-    fish_id: int,
+    fish_id: Annotated[int, Path(ge=0,le=100000)],
     fish_data: dict = Body(...),
     db: Session = Depends(init_db)
 ):
