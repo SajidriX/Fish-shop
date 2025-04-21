@@ -7,9 +7,9 @@ class User(BaseModel):
     password: str
 
 class Fish(BaseModel):
-    name: str
-    price: float
-    cathced: str
+    name: Annotated[str, Field(min_length=3, max_length=28)]
+    price: Annotated[float, Field(ge=0,le=1000000)]
+    cathced: Annotated[str, Field(min_length=3,max_length=50)]
 
 class UserGet(BaseModel):
     username: str
