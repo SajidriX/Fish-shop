@@ -48,7 +48,7 @@ app.include_router(users_router)
 app.include_router(fishes_router)
 
 
-# Храним время последних запросов для каждого IP
+
 request_history = defaultdict(list)
 
 @app.middleware("http")
@@ -56,20 +56,20 @@ async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host  # Получаем IP клиента
     current_time = time.time()
     
-    # Очищаем старые записи (старше 1 секунды)
+
     request_history[client_ip] = [
         timestamp for timestamp in request_history[client_ip] 
-        if current_time - timestamp < 1
+        if current_time - timestamp < 10
     ]
     
-    # Проверяем количество запросов за последнюю секунду
+    
     if len(request_history[client_ip]) >= 8:
         raise HTTPException(status_code=429, detail="Too Many Requests")
     
-    # Добавляем текущий запрос в историю
+    
     request_history[client_ip].append(current_time)
     
-    # Продолжаем обработку запроса
+    
     response = await call_next(request)
     return response
 
