@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query, Body, Path, Header, Cookie, File, UploadFile, Depends, BackgroundTasks
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -7,6 +7,8 @@ from users.main_users import router as users_router
 from fishes.main_fishes import router as fishes_router
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+import time
+from collections import defaultdict
 
 
 # Lifespan для управления жизненным циклом БД
@@ -44,6 +46,32 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(fishes_router)
+
+
+# Храним время последних запросов для каждого IP
+request_history = defaultdict(list)
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host  # Получаем IP клиента
+    current_time = time.time()
+    
+    # Очищаем старые записи (старше 1 секунды)
+    request_history[client_ip] = [
+        timestamp for timestamp in request_history[client_ip] 
+        if current_time - timestamp < 1
+    ]
+    
+    # Проверяем количество запросов за последнюю секунду
+    if len(request_history[client_ip]) >= 8:
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+    
+    # Добавляем текущий запрос в историю
+    request_history[client_ip].append(current_time)
+    
+    # Продолжаем обработку запроса
+    response = await call_next(request)
+    return response
 
 
 if __name__ == "__main__":
