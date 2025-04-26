@@ -59,7 +59,7 @@ async def rate_limit_middleware(request: Request, call_next):
 
     request_history[client_ip] = [
         timestamp for timestamp in request_history[client_ip] 
-        if current_time - timestamp < 10
+        if current_time - timestamp < 5
     ]
     
     
