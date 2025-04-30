@@ -36,7 +36,7 @@ html = """
 </html>
 """
 
-@router.get("/")
+@router.get("/wall")
 async def get():
     return HTMLResponse(html)
 
