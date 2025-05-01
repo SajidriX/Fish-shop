@@ -9,7 +9,7 @@ import bcrypt
 
 config = AuthXConfig()
 config.JWT_ALGORITHM = "HS512"
-config.JWT_SECRET_KEY = "12201222Sajison1222!"
+config.JWT_SECRET_KEY = "12201222Sajison1222!11QQqq!!T95E42012Artur"
 config.JWT_TOKEN_LOCATION = ["cookies"]
 
 security = AuthX(config=config)
