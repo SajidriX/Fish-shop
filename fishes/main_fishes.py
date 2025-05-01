@@ -45,15 +45,15 @@ async def update_fish(
     db.commit()
     return fish
 
-@router.get("/fishes/{cathced}",response_model=List[Fish],tags=["Рыба"],summary="Фильтрация рыбы по месту выловки")
+@router.get("/fishes/place/{cathced}",response_model=List[Fish],tags=["Рыба"],summary="Фильтрация рыбы по месту выловки")
 async def get_fish_by_place(
-    catched: Annotated[str,Path(min_length=3,max_length=20)],
+    cathced: Annotated[str,Path(min_length=3,max_length=20)],
     db: Session = Depends(init_db)
 ):
-    fish = db.query(Fishes).filter(Fishes.cathced == catched).all()
+    fish = db.query(Fishes).filter(Fishes.cathced== cathced).all()
     return fish
     
-@router.get("/fishes/{name}",response_model=List[Fish], tags=["Рыба"], summary="Фильтрация рыбы по названию")
+@router.get("/fishes/byName/{name}",response_model=List[Fish], tags=["Рыба"], summary="Фильтрация рыбы по названию")
 async def get_fish_by_name(
         name: Annotated[str,Path(min_length=2,max_length=55)],
         db: Session = Depends(init_db)
