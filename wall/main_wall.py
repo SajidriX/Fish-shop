@@ -36,7 +36,7 @@ html = """
 </html>
 """
 
-@router.get("/wall")
+@router.get("/wall",tags=["Чат"],summary="Анонимный чат через web-sockets")
 async def get():
     return HTMLResponse(html)
 
