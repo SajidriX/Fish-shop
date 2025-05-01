@@ -14,11 +14,10 @@ config.JWT_TOKEN_LOCATION = ["cookies"]
 
 security = AuthX(config=config)
 
-def hash_password(password:str) -> str:
-    sugar = bcrypt.gensalt()
-    
-    hashing = bcrypt.hashpw(password.encode('utf-8', sugar))
-    return hashing.decode('utf-8')
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt) 
+    return hashed.decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(
@@ -31,7 +30,7 @@ router = APIRouter()
 @router.post("/users_create", response_model=User, tags=["Пользователи"], summary="Создание пользователя") 
 async def create_user(user_data: Annotated[UserCreate, Body()], db: Session = Depends(init_db)):
     hashed_password = hash_password(user_data.password)
-    user = Users(username=user_data.username, password = user_data.password)
+    user = Users(username=user_data.username, password = hashed_password)
     db.add(user)
     db.commit()
     db.refresh(user) 
@@ -49,7 +48,7 @@ async def get_users(db: Session = Depends(init_db)):
             detail=f"Ошибка при получении пользователей: {str(e)}"
         )
 
-@router.delete("/users/{user_id}", tags=["Пользователи"], summary="Удаление пользователя")
+@router.delete("/users/{user_id}",  dependencies=[Depends(security.access_token_required)],tags=["Пользователи"], summary="Удаление пользователя")
 async def delete_user(user_id: Annotated[int, Path(ge=1, le=1000000)], db: Session = Depends(init_db)):
     user = db.query(Users).filter(Users.id == user_id).first()
     if not user:
@@ -58,7 +57,7 @@ async def delete_user(user_id: Annotated[int, Path(ge=1, le=1000000)], db: Sessi
     db.commit()
     return {"status": "User deleted"}
 
-@router.patch("/users/{user_id}", tags=["Пользователи"], summary="Изменение пользователя")
+@router.patch("/users/{user_id}",  dependencies=[Depends(security.access_token_required)],tags=["Пользователи"], summary="Изменение пользователя")
 async def update_user(
     user_id: Annotated[int, Path(ge=1, le=1000000)],
     user_data: Annotated[Dict, Body(...)],
@@ -74,17 +73,20 @@ async def update_user(
     db.commit()
     return user
 
-@router.post("/login", tags=["Пользователи"],summary="логин")
-async def login_user(user: Annotated[User, Body()],response: Response, db: Session = Depends(init_db)):
-    hashed_password = hash_password(user.password)
-    query = db.query(Users).filter(Users.username == user.username, Users.password == hash_password).first()
-    if not query:
-        raise HTTPException(status_code=404, detail="User not found")    
+@router.post("/login", tags=["Пользователи"], summary="логин")
+async def login_user(
+    user_data: Annotated[UserCreate, Body()],  
+    response: Response, 
+    db: Session = Depends(init_db)
+):
+    db_user = db.query(Users).filter(Users.username == user_data.username).first()
     
-    token = security.create_access_token(uid=user.username)
+    if not db_user or not verify_password(user_data.password, db_user.password):
+        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+    
+    token = security.create_access_token(uid=db_user.username)
     response.set_cookie(config.JWT_ACCESS_COOKIE_NAME, token)
-
-    return {"acces token": token}
+    return {"access_token": token}
 
 @router.get("/protected", dependencies=[Depends(security.access_token_required)], tags=["Пользователи"], summary="Роут работает только если у пользователя есть jwt")
 async def protected_route(db: Session = Depends(init_db)):
