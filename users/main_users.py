@@ -5,6 +5,7 @@ from  schemas import User, UserGet, UserCreate
 from typing import List, Annotated, Dict
 from authx import AuthX, AuthXConfig
 from models import Fishes
+import bcrypt
 
 config = AuthXConfig()
 config.JWT_ALGORITHM = "HS512"
@@ -13,11 +14,23 @@ config.JWT_TOKEN_LOCATION = ["cookies"]
 
 security = AuthX(config=config)
 
+def hash_password(password:str) -> str:
+    sugar = bcrypt.gensalt()
+    
+    hashing = bcrypt.hashpw(password.encode('utf-8', sugar))
+    return hashing.decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(
+        plain_password.encode('utf-8'),
+        hashed_password.encode('utf-8')
+    )
 
 router = APIRouter()
 
 @router.post("/users_create", response_model=User, tags=["Пользователи"], summary="Создание пользователя") 
 async def create_user(user_data: Annotated[UserCreate, Body()], db: Session = Depends(init_db)):
+    hashed_password = hash_password(user_data.password)
     user = Users(username=user_data.username, password = user_data.password)
     db.add(user)
     db.commit()
@@ -63,7 +76,8 @@ async def update_user(
 
 @router.post("/login", tags=["Пользователи"],summary="логин")
 async def login_user(user: Annotated[User, Body()],response: Response, db: Session = Depends(init_db)):
-    query = db.query(Users).filter(Users.username == user.username, Users.password == user.password).first()
+    hashed_password = hash_password(user.password)
+    query = db.query(Users).filter(Users.username == user.username, Users.password == hash_password).first()
     if not query:
         raise HTTPException(status_code=404, detail="User not found")    
     
