@@ -76,4 +76,4 @@ async def rate_limit_middleware(request: Request, call_next):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app=app)
+    uvicorn.run(app=app,port=2012,reload=False)
