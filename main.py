@@ -9,6 +9,21 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 import time
 from collections import defaultdict
+from fastapi_csrf_protect import CsrfProtect
+from fastapi_csrf_protect.exceptions import CsrfProtectError
+from pydantic_settings import BaseSettings
+
+
+class CsrfSettings(BaseSettings):
+  secret_key: str = "12201222Sajison1222!11QQqq!!T95E42012Artur"
+  cookie_samesite: str = "none"
+
+@CsrfProtect.load_config
+def get_csrf_config():
+  return CsrfSettings()
+
+csrf_protect = CsrfProtect()
+
 
 
 # Lifespan для управления жизненным циклом БД
