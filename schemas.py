@@ -27,3 +27,7 @@ class UserOut(BaseModel):
 
     class Config:
         orm_mode=True
+
+class UserDelete(BaseModel):
+    username: Annotated[str, Field(min_length=3, max_length=20)]
+    id: int

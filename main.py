@@ -1,15 +1,22 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from models import Base, engine, init_db as get_db
-from users.main_users import router as users_router
+from models import Base, engine, init_db as get_db,Users
+from users.main_users import router as users_router,backend,get_user_manager
 from fishes.main_fishes import router as fishes_router
 from wall.main_wall import router as wall_router
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import time
 from collections import defaultdict
+from fastapi_users import FastAPIUsers
+from schemas import UserCreate,UserGet,UserDelete,UserOut,User
 
+
+fastapi_users = FastAPIUsers[Users, int](
+    get_user_manager,
+    [backend]
+)
 
 # Lifespan для управления жизненным циклом БД
 @asynccontextmanager
@@ -47,6 +54,31 @@ app.add_middleware(
 app.include_router(users_router)
 app.include_router(fishes_router)
 app.include_router(wall_router)
+app.include_router(
+    fastapi_users.get_auth_router(backend),
+    prefix="/auth/jwt",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_register_router(UserGet, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_verify_router(UserGet),
+    prefix="/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_reset_password_router(),
+    prefix="/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_users_router(UserGet, User),
+    prefix="/users",
+    tags=["users"],
+)
 
 
 
@@ -54,7 +86,7 @@ request_history = defaultdict(list)
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
-    client_ip = request.client.host  # Получаем IP клиента
+    client_ip = request.client.host  
     current_time = time.time()
     
 

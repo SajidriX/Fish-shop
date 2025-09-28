@@ -3,10 +3,45 @@ from fastapi.responses import JSONResponse
 from fastapi_csrf_protect import CsrfProtect
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from typing import Dict, Annotated
+from typing import Dict, Annotated,Optional
 from models import init_db, Users, Fishes
-from schemas import UserCreate, User,UserOut
+from schemas import UserCreate, User,UserOut,UserDelete
 import bcrypt
+from fastapi_users.authentication import BearerTransport, JWTStrategy, AuthenticationBackend
+from fastapi_users import BaseUserManager,IntegerIDMixin
+import uuid
+
+
+bearer = BearerTransport(tokenUrl="auth/jwt/login")
+
+secret_key = "ExampleSecretKeyDontUseItUseDotEnvFile"
+
+
+
+class UserManager(IntegerIDMixin, BaseUserManager[User, uuid.UUID]):
+    reset_password_token_secret = secret_key
+    verification_token_secret = secret_key
+    reset_password_token_lifetime_seconds = 180
+    verification_token_lifetime_seconds = 36000
+
+    async def on_after_register(self, user: Users, request: Optional[Request] = None):
+        print(f"User {user.id} has registered.")
+
+    async def on_after_forgot_password(
+        self, user: Users, token: str, request: Optional[Request] = None
+    ):
+        print(f"User {user.id} has forgot their password. Reset token: {token}")
+
+    async def on_after_request_verify(
+        self, user: Users, token: str, request: Optional[Request] = None
+    ):
+        print(f"Verification requested for user {user.id}. Verification token: {token}")
+
+
+async def get_user_manager(user_db=Depends(init_db)):
+    yield UserManager(user_db)
+
+
 
 
 
@@ -19,6 +54,15 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
+def get_jwt() -> JWTStrategy:
+    return JWTStrategy(secret=secret_key,lifetime_seconds=36000,algorithm="HS512")
+
+backend = AuthenticationBackend(
+    name = "jwt",
+    transport=bearer,
+    get_strategy=get_jwt,
+
+)
 
 router = APIRouter()
 
@@ -59,3 +103,16 @@ async def create_user(user_data: UserCreate = Body(...), db: Session = Depends(i
     db.commit()
     db.refresh(user)
     return user
+
+@router.delete("/users_delete",tags = ["Пользователи"], summary = "Удаление пользователя")
+async def delete_user(user_data: UserDelete = Body(...), db: Session = Depends(init_db)):
+
+    user = db.query(Users).filter(Users.username == user_data.username, Users.id == user_data.id).first()
+
+    if not user:
+        return "This user does not exist"
+    elif user:
+        db.delete(user)
+        db.commit()
+    
+    return "User deleted"
