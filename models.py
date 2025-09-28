@@ -15,6 +15,7 @@ class Users(Base):
     username = Column(String)
     balance = Column(Integer, default=0)
     password = Column(String)
+    role = Column(String, default="user")
 
 class Fishes(Base):
     __tablename__ = "fishes"

