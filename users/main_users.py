@@ -10,16 +10,18 @@ from schemas import UserCreate, User,UserOut,UserDelete
 import bcrypt
 from fastapi_users.authentication import BearerTransport, JWTStrategy, AuthenticationBackend
 from fastapi_users import BaseUserManager,IntegerIDMixin
-import uuid
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
 bearer = BearerTransport(tokenUrl="auth/jwt/login")
 
-secret_key = "ExampleSecretKeyDontUseItUseDotEnvFile"
+secret_key = os.getenv('SECRET_KEY')
 
 
 
-class UserManager(IntegerIDMixin, BaseUserManager[User, uuid.UUID]):
+class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = secret_key
     verification_token_secret = secret_key
     reset_password_token_lifetime_seconds = 180
