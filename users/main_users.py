@@ -1,11 +1,8 @@
 
-from fastapi import APIRouter, Depends, HTTPException, Body, Response, Path, Request, Header
-from fastapi.responses import JSONResponse
-from fastapi_csrf_protect import CsrfProtect
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Body, Path, Request
 from sqlalchemy.orm import Session
 from typing import Dict, Annotated,Optional
-from models import init_db, Users, Fishes
+from models import init_db, Users
 from schemas import UserCreate, User,UserOut,UserDelete
 import bcrypt
 from fastapi_users.authentication import BearerTransport, JWTStrategy, AuthenticationBackend
@@ -78,8 +75,6 @@ router = APIRouter()
 async def create_user(user_data: Annotated[UserCreate, Body()], db: Session = Depends(init_db)):
     hashed_password = hash_password(user_data.password)
     user = Users(username=user_data.username, password = hashed_password)
-    if user_data.password == "Sajison1222!":
-        user.role = "Admin"
     db.add(user)
     db.commit()
     db.refresh(user) 
